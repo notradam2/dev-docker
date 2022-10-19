@@ -1,0 +1,13 @@
+/data
+.idea/
+.DS_Store
+
+docker-configs/acme/
+docker-configs/nginx-proxy/certs/default.crt
+docker-configs/nginx-proxy/certs/default.key
+docker-configs/nginx-proxy/certs/dhparam.pem
+docker-configs/nginx-proxy/conf.d/
+docker-configs/nginx-proxy/dhparam/
+
+/apps
+!/apps/.gitkeep

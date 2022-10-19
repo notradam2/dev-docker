@@ -1,0 +1,67 @@
+version: '3'
+services:
+  mysql:
+    platform: linux/amd64
+    container_name: instabook-db
+    build: ./docker-configs/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+    volumes:
+      - ./data/mysql:/var/lib/mysql:cached
+      - ./data/init.d:/docker-entrypoint-initdb.d
+
+  nginx-proxy:
+    container_name: instabook-nginx-proxy
+    image: jwilder/nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./docker-configs/nginx-proxy/certs:/etc/nginx/certs
+      - ./docker-configs/nginx-proxy/vhost.d:/etc/nginx/vhost.d:ro
+    ports:
+      - '80:80'
+      - '443:443'
+
+  instabook:
+    container_name: instabook
+    build: ./docker-configs/instabook
+    volumes:
+      - ./apps/instabook:/var/www/html:delegated
+      - ./docker-configs/instabook/000-default.conf:/etc/apache2/sites-available/000-default.conf
+      - exclude:/var/www/html/.git
+    environment:
+      - VIRTUAL_HOST=instabook.localhost
+
+  instabook-redis:
+    image: redis:latest
+    container_name: instabook-redis
+    command: redis-server --appendonly yes --requirepass "Y+~5s@(p"
+    volumes:
+      - /var/lib/redis:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  instabook-horizon:
+    container_name: instabook-worker
+    build: ./docker-configs/instabook-horizon
+    volumes:
+      - ./apps/instabook:/var/www/html:delegated
+
+  instabook-scheduler:
+    container_name: instabook-scheduler
+    build: ./docker-configs/instabook-scheduler
+    depends_on:
+      instabook-redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/instabook:/var/www/html:delegated
+    restart: always
+
+volumes:
+  exclude:

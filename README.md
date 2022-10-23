@@ -8,6 +8,8 @@ Docker compose local development setup.
 # Docker Setup
 Git clone this repository
 
+```
 git clone git@github.com:notradam2/dev-docker.git
 
 cd dev-docker
+```
